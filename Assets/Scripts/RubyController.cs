@@ -2,29 +2,42 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class RubyController : MonoBehaviour
 {
     public float speed = 3.0f;
 
     public int maxHealth = 5;
+    public int currentScene;
     public float timeInvincible = 2.0f;
 
     public AudioClip throwSound;
     public AudioClip hitSound;
+    public AudioClip backgroundMusic;
+    public AudioClip winMusic;
+    public AudioClip loseMusic;
+    public AudioClip jambiSound;
 
     public GameObject projectilePrefab;
     public GameObject healthincreasePrefab;
     public GameObject hiteffectPrefab;
 
-    public int score;
+    public int score = 0;
 
     public Text scoreText;
     public Text winText;
+    public Text lostText;
+    public Text cogText;
+
+    private float boostTimer;
+    private bool boosting;
 
     public int health { get { return currentHealth; }}
     int currentHealth;
+    int currentCog;
 
+    bool gameOver;
     bool isInvincible;
     float invincibleTimer;
 
@@ -42,10 +55,18 @@ public class RubyController : MonoBehaviour
     {
         rigidbody2d = GetComponent<Rigidbody2D>();
         currentHealth = maxHealth;
+        currentCog = 4;
+        boostTimer = 0;
+        boosting = false;
+        cogText.text = "Cogs: " + currentCog;
         animator = GetComponent<Animator>();
         audioSource = GetComponent<AudioSource>();
-        score = 0;
+        scoreText.text = "Fixed Robots: " + score.ToString();
         winText.text = "";
+        lostText.text = "";
+        audioSource.clip = backgroundMusic;
+        audioSource.Play();
+        audioSource.loop = true;
     }
 
     // Update is called once per frame
@@ -73,7 +94,7 @@ public class RubyController : MonoBehaviour
                 isInvincible = false;
         }
 
-        if (Input.GetKeyDown(KeyCode.C))
+        if (Input.GetKeyDown(KeyCode.C) && currentCog != 0)
         {
             Launch();
         }
@@ -83,17 +104,80 @@ public class RubyController : MonoBehaviour
             RaycastHit2D hit = Physics2D.Raycast(rigidbody2d.position + Vector2.up * 0.2f, lookDirection, 1.5f, LayerMask.GetMask("NPC"));
             if (hit.collider != null)
             {
-                NonPlayerCharacter character = hit.collider.GetComponent<NonPlayerCharacter>();
-                if (character != null)
+                audioSource.PlayOneShot(jambiSound);
+
+                if (score == 4)
                 {
-                    character.DisplayDialog();
+                    NonPlayerCharacter character = hit.collider.GetComponent<NonPlayerCharacter>();
+                    if (character != null)
+                    {
+                        SceneManager.LoadScene("SecondScene");
+                    }
                 }
+
+                else
+                {
+                    NonPlayerCharacter character = hit.collider.GetComponent<NonPlayerCharacter>();
+                    if (character != null)
+                    {
+                        character.DisplayDialog();
+                    }
+                }
+            }
+        }
+
+        if (Input.GetKey(KeyCode.R))
+
+        {
+            if (gameOver == true)
+            {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); // this loads the currently active scene
             }
         }
 
         if (Input.GetKey("escape"))
         {
             Application.Quit();
+        }
+
+        if(boosting)
+        {
+            boostTimer += Time.deltaTime;
+            if(boostTimer >= 2)
+            {
+                speed = 3;
+                boostTimer = 0;
+                boosting = false;
+            }
+        }
+
+        if (currentHealth <= 0)
+        {
+            lostText.text = "You Lost! Press R to Restart";
+            gameOver = true;
+            if (Input.GetKey(KeyCode.R))
+            {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            }
+            speed = 0;
+        }
+
+        if(score == 4)
+        {
+            currentScene = SceneManager.GetActiveScene().buildIndex;
+            if(currentScene == 0)
+            {
+                winText.text = "Talk to Jambi to visit Stage Two";
+            }
+        }
+
+        if (score == 5)
+        {
+            winText.text = "You Win! Press R to Restart. Game Created By: Mia Torres";
+            if (Input.GetKey(KeyCode.R))
+            {
+                SceneManager.LoadScene("FirstScene");
+            }
         }
     }
 
@@ -104,6 +188,16 @@ public class RubyController : MonoBehaviour
         position.y = position.y + speed * vertical * Time.deltaTime;
 
         rigidbody2d.MovePosition(position);
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if(other.tag == "Crystal")
+        {
+            boosting = true;
+            speed = 5;
+            Destroy(other.gameObject);
+        }
     }
 
     public void ChangeHealth(int amount)
@@ -127,17 +221,37 @@ public class RubyController : MonoBehaviour
 
         currentHealth = Mathf.Clamp(currentHealth + amount, 0, maxHealth);
         UIHealthBar.instance.SetValue(currentHealth / (float)maxHealth);
+
+        if(currentHealth == 0)
+        {
+            audioSource.clip = backgroundMusic;
+            audioSource.Stop();
+            audioSource.clip = loseMusic;
+            audioSource.Play();
+            audioSource.loop = false;
+        }
     }
 
     public void ChangeScore(int scoreAmount)
     {
         score += 1;
         scoreText.text = "Fixed Robots: " + score.ToString();
-
-        if (score >= 4)
+        
+        if(score == 5)
         {
-            winText.text = "You Win! Game Created By: Mia Torres";
+            audioSource.clip = backgroundMusic;
+            audioSource.Stop();
+            audioSource.clip = winMusic;
+            audioSource.Play();
+            audioSource.loop = false;
         }
+        
+    }
+
+    public void ChangeCog(int amount)
+    {
+        currentCog = currentCog + amount;
+        cogText.text = "Cogs: " + currentCog;
     }
 
     void Launch()
@@ -148,6 +262,8 @@ public class RubyController : MonoBehaviour
         projectile.Launch(lookDirection, 300);
 
         animator.SetTrigger("Launch");
+        currentCog = currentCog - 1;
+        cogText.text = "Cogs: " + currentCog;
         PlaySound(throwSound);
     }
 

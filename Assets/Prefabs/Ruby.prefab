@@ -101,9 +101,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 3
   maxHealth: 5
+  currentScene: 0
   timeInvincible: 2
   throwSound: {fileID: 8300000, guid: 6995a34d89c5e144aaf7b5b26f9f7a3d, type: 3}
   hitSound: {fileID: 8300000, guid: a6778a73d5b00684fb04dc5920c83a7c, type: 3}
+  backgroundMusic: {fileID: 8300000, guid: 9699e631fc5a2f444b37607ef51f75c1, type: 3}
+  winMusic: {fileID: 8300000, guid: 204cedb6e7880554a91c2be951c0ccf0, type: 3}
+  loseMusic: {fileID: 8300000, guid: 2e88f621cd9629148831583edb639e27, type: 3}
   projectilePrefab: {fileID: 5143251920092084745, guid: a7b0037fe0edd3f4cbbb8e6a92286feb,
     type: 3}
   healthincreasePrefab: {fileID: 7468485266621302771, guid: d964b23029f9e8d40b631cf6d72606a8,
@@ -112,6 +116,9 @@ MonoBehaviour:
     type: 3}
   score: 0
   scoreText: {fileID: 0}
+  winText: {fileID: 0}
+  lostText: {fileID: 0}
+  cogText: {fileID: 0}
 --- !u!50 &1006060548493228291
 Rigidbody2D:
   serializedVersion: 4
@@ -190,7 +197,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 9699e631fc5a2f444b37607ef51f75c1, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 0.3
+  m_Volume: 0.75
   m_Pitch: 1
   Loop: 1
   Mute: 0

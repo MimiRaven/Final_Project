@@ -42,5 +42,13 @@ public class Projectile : MonoBehaviour
         }
 
         Destroy(gameObject);
+
+        ToughBot f = other.collider.GetComponent<ToughBot>();
+        if (f != null)
+        {
+            f.Fix();
+        }
+
+        Destroy(gameObject);
     }
 }
